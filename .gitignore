@@ -1,0 +1,41 @@
+# =========================
+# Python: bytecode e cache
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# =========================
+# Ambiente virtual
+# =========================
+.venv/
+venv/
+env/
+
+# =========================
+# Ferramentas de teste
+# =========================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# =========================
+# Type checkers e linters
+# =========================
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# =========================
+# Configurações locais de editor/IDE
+# =========================
+.vscode/
+.idea/
+*.code-workspace
+
+# =========================
+# Arquivos de sistema operacional
+# =========================
+.DS_Store
+Thumbs.db
