@@ -1,0 +1,31 @@
+```mermaid
+flowchart LR
+    Client[Cliente Web ou Mobile]
+    API[FastAPI API]
+    DeckService[DeckService]
+    CardService[CardService]
+    DeckRepo[DeckRepository]
+    CardRepo[CardRepository]
+    DB[(Banco de Dados)]
+    LLM[LLM Provider opcional]
+
+    BulkEndpoint[POST /decks/:deck_id/cards/bulk]
+    BulkPayload[cards: array de CardInput]
+    CardInput[CardInput: front back language source]
+    PersistBulk[Persistencia em lote 1..N cards]
+
+    Client --> API
+    Client --> BulkEndpoint --> API
+
+    API --> DeckService --> DeckRepo --> DB
+    API --> CardService
+    CardService --> CardRepo --> DB
+    CardService --> DeckRepo
+
+    API -->|gera cards via IA opcional| LLM
+    LLM -->|retorna cards array| API
+
+    API --> BulkPayload --> CardInput --> CardService
+    BulkEndpoint -->|deck_id no path ou no payload| CardService
+    CardService --> PersistBulk --> CardRepo
+```
