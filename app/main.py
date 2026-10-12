@@ -3,6 +3,8 @@ from typing import Literal, TypedDict
 
 from fastapi import FastAPI
 
+from app.api.deck_routes import router as deck_router
+
 
 class HealthResponse(TypedDict):
     status: Literal["ok"]
@@ -10,6 +12,8 @@ class HealthResponse(TypedDict):
 
 
 app = FastAPI(title="Flashcards Micro-API")
+
+app.include_router(deck_router)
 
 
 @app.get("/health")
