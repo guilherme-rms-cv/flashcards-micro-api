@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import Any
 from datetime import datetime
 from uuid import UUID
 
@@ -36,36 +37,32 @@ class DeckService:
         """Return one deck by identifier."""
         row = self.repository.get_by_id(deck_id)
         if row is None:
-            raise DeckNotFoundError(f"Deck '{deck_id}' not found.")
+            self._raise_not_found(deck_id)
         return self._to_output(row)
 
     def update_deck(self, deck_id: str | UUID, payload: DeckUpdate) -> DeckOut:
         """Update deck data and return the persisted deck."""
-        existing = self.repository.get_by_id(deck_id)
-        if existing is None:
-            raise DeckNotFoundError(f"Deck '{deck_id}' not found.")
-
         updated = self.repository.update(
             deck_id=deck_id,
             name=payload.name,
             description=payload.description,
         )
         if updated is None:
-            raise DeckNotFoundError(f"Deck '{deck_id}' not found.")
+            self._raise_not_found(deck_id)
 
         return self._to_output(updated)
 
     def delete_deck(self, deck_id: str | UUID) -> None:
         """Delete a deck if it exists."""
-        existing = self.repository.get_by_id(deck_id)
-        if existing is None:
-            raise DeckNotFoundError(f"Deck '{deck_id}' not found.")
-
         deleted = self.repository.delete(deck_id)
         if not deleted:
-            raise DeckNotFoundError(f"Deck '{deck_id}' not found.")
+            self._raise_not_found(deck_id)
 
-    def _to_output(self, row: dict[str, str | None]) -> DeckOut:
+    def _raise_not_found(self, deck_id: str | UUID) -> None:
+        """Raise a standardized not-found error."""
+        raise DeckNotFoundError(f"Deck '{deck_id}' not found.")
+
+    def _to_output(self, row: dict[str, Any]) -> DeckOut:
         """Convert repository data to the public deck model."""
         return DeckOut(
             id=UUID(str(row["id"])),

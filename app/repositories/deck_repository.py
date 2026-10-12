@@ -5,8 +5,11 @@ from __future__ import annotations
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Optional
+from typing import Any, Optional
 from uuid import UUID, uuid4
+
+DECK_COLUMNS = "id, name, description, created_at, updated_at"
+SELECT_DECK_BASE = f"SELECT {DECK_COLUMNS} FROM decks"
 
 
 class DeckRepository:
@@ -16,6 +19,14 @@ class DeckRepository:
         self.database_path = Path(database_path)
         self.database_path.parent.mkdir(parents=True, exist_ok=True)
         self._initialize()
+
+    @staticmethod
+    def _normalize_deck_id(deck_id: str | UUID) -> str:
+        return str(deck_id)
+
+    @staticmethod
+    def _row_to_dict(row: sqlite3.Row | None) -> Optional[dict[str, Any]]:
+        return None if row is None else dict(row)
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(self.database_path)
@@ -66,25 +77,28 @@ class DeckRepository:
         """Return all decks ordered by creation time."""
         with self._connect() as connection:
             rows = connection.execute(
-                "SELECT id, name, description, created_at, updated_at FROM decks ORDER BY created_at ASC"
+                f"{SELECT_DECK_BASE} ORDER BY created_at ASC"
             ).fetchall()
 
         return [dict(row) for row in rows]
 
     def get_by_id(self, deck_id: str | UUID) -> Optional[dict[str, Any]]:
         """Return a single deck by identifier, if present."""
-        target_id = str(deck_id)
+        target_id = self._normalize_deck_id(deck_id)
         with self._connect() as connection:
             row = connection.execute(
-                "SELECT id, name, description, created_at, updated_at FROM decks WHERE id = ?",
+                f"{SELECT_DECK_BASE} WHERE id = ?",
                 (target_id,),
             ).fetchone()
 
-        if row is None:
-            return None
-        return dict(row)
+        return self._row_to_dict(row)
 
-    def update(self, deck_id: str | UUID, name: Optional[str] = None, description: Optional[str] = None) -> Optional[dict[str, Any]]:
+    def update(
+        self,
+        deck_id: str | UUID,
+        name: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> Optional[dict[str, Any]]:
         """Update a deck by identifier."""
         current = self.get_by_id(deck_id)
         if current is None:
@@ -95,7 +109,7 @@ class DeckRepository:
         updated_at = self._utc_now()
 
         payload = {
-            "id": str(deck_id),
+            "id": self._normalize_deck_id(deck_id),
             "name": updated_name,
             "description": updated_description,
             "updated_at": updated_at,
@@ -113,12 +127,12 @@ class DeckRepository:
                 payload,
             )
 
-        result = self.get_by_id(str(deck_id))
+        result = self.get_by_id(payload["id"])
         return result
 
     def delete(self, deck_id: str | UUID) -> bool:
         """Delete a deck by identifier."""
-        target_id = str(deck_id)
+        target_id = self._normalize_deck_id(deck_id)
         with self._connect() as connection:
             cursor = connection.execute("DELETE FROM decks WHERE id = ?", (target_id,))
         return cursor.rowcount > 0
