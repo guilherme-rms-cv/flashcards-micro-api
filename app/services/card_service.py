@@ -8,21 +8,34 @@ from uuid import UUID
 
 from app.models.card import CardBulkCreate, CardCreate, CardOut, CardUpdate
 from app.repositories.card_repository import CardRepository
+from app.repositories.deck_repository import DeckRepository
 
 
 class CardNotFoundError(LookupError):
     """Raised when a card does not exist."""
 
 
+class CardDeckNotFoundError(LookupError):
+    """Raised when a related deck does not exist."""
+
+
 class CardService:
     """Service layer for card CRUD operations."""
 
-    def __init__(self, repository: CardRepository | None = None) -> None:
+    def __init__(
+        self,
+        repository: CardRepository | None = None,
+        deck_repository: DeckRepository | None = None,
+    ) -> None:
         self.repository = repository or CardRepository()
+        self.deck_repository = deck_repository or DeckRepository(
+            database_path=self.repository.database_path
+        )
 
     def create_card(self, payload: CardCreate, deck_id: str | UUID | None = None) -> CardOut:
         """Create a card and return the persisted model."""
         resolved_deck_id = self._resolve_deck_id(payload=payload, deck_id=deck_id)
+        self._ensure_deck_exists(resolved_deck_id)
         row = self.repository.create(
             deck_id=resolved_deck_id,
             front=payload.front,
@@ -46,6 +59,7 @@ class CardService:
         target_deck_id = str(deck_id)
         if payload.deck_id is not None and str(payload.deck_id) != target_deck_id:
             raise ValueError("deck_id in payload must match deck_id in path")
+        self._ensure_deck_exists(target_deck_id)
 
         prepared_cards: list[dict[str, str]] = []
         for card in payload.cards:
@@ -106,6 +120,11 @@ class CardService:
             and payload.source is None
         ):
             raise ValueError("at least one field must be provided for card update")
+
+    def _ensure_deck_exists(self, deck_id: str | UUID) -> None:
+        """Validate that the target deck exists."""
+        if self.deck_repository.get_by_id(deck_id) is None:
+            raise CardDeckNotFoundError(f"Deck '{deck_id}' not found.")
 
     def _raise_not_found(self, card_id: str | UUID) -> None:
         """Raise a standardized not-found error."""
