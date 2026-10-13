@@ -1,87 +1,156 @@
 # Flashcards Micro-API (MVP)
 
-Micro-API em Python para um app de flashcards inspirado no Anki, com foco em criação rápida de cards e suporte a adição assistida por LLM (ex.: conteúdo em português e inglês).
+Micro-API em Python para um app de flashcards inspirado no Anki.  
+O foco do MVP é oferecer um backend simples, evolutivo e pronto para integração com clientes web/mobile.
 
 ## Objetivo
 
-Entregar um backend simples, evolutivo e pronto para integração com clientes web/mobile, cobrindo:
+Entregar a base funcional para:
 
-- CRUD básico de decks e cards
-- Suporte a cards bilíngues (PT/EN)
-- Pipeline inicial para gerar/sugerir cards via LLM
-- Base para evolução de revisão espaçada e analytics
+- gestão de decks;
+- criação e manutenção de cards;
+- integração opcional com LLM para geração de cards;
+- criação em lote de cards (bulk), incluindo payloads vindos de IA.
 
 ## Stack
 
 - **Linguagem:** Python 3.12
-- **Framework API:** FastAPI
+- **Framework:** FastAPI
 - **Servidor ASGI:** Uvicorn
-- **Ambiente virtual:** `.venv`
-- **Dependências:** `requirements.txt` com versões fixas (`==`)
+- **Modelagem/validação:** Pydantic v2
+- **Persistência inicial:** SQLite (sem dependências externas de banco)
 
-## Como rodar localmente
+## Instalação
 
-### 1) Pré-requisitos
+### Pré-requisitos
 
-- Python 3.12 instalado
+- Python 3.12
 
-### 2) Configuração do ambiente
-
-No diretório do projeto:
+### Setup do ambiente
 
 ```bash
-/usr/bin/python3.12 -m venv .venv
+python3.12 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-### 3) Subir a API
-
-Com a aplicação em `app/main.py`:
+## Execução
 
 ```bash
 .venv/bin/uvicorn app.main:app --reload
 ```
 
-API disponível em:
+Endpoints de documentação:
 
-- `http://127.0.0.1:8000`
-- Docs Swagger: `http://127.0.0.1:8000/docs`
-- Docs ReDoc: `http://127.0.0.1:8000/redoc`
+- Swagger: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
 
-## Roadmap de releases
+Health check:
 
-### v0.1.0 — Fundação da API (MVP técnico)
+- `GET /health`
 
-- Estrutura inicial do projeto
-- Setup de ambiente e dependências fixas
-- Endpoint de health check
-- Padrão base de resposta/erro
+## Testes
 
-### v0.2.0 — Core de flashcards
+O projeto já possui testes iniciais de API e validação de modelos em `tests/`.
 
-- CRUD de decks
-- CRUD de cards
-- Campos para frente/verso e idioma (`pt`, `en`)
-- Filtros simples por deck/idioma
+### Executar todos os testes
 
-### v0.3.0 — Integração inicial com LLM
+```bash
+.venv/bin/python -m pytest -q
+```
 
-- Endpoint para sugerir cards a partir de texto livre
-- Estratégia de validação/sanitização de entrada
-- Registro de origem do card (manual vs LLM)
+### Executar apenas testes de API
 
-### v0.4.0 — Revisão e aprendizado
+```bash
+.venv/bin/python -m pytest tests/api -q
+```
 
-- Modelo inicial de revisão espaçada
-- Histórico de respostas (acerto/erro)
-- Priorização de cards para revisão
+### Executar apenas validações de modelo
 
-### v0.5.0 — Qualidade e operação
+```bash
+.venv/bin/python -m pytest tests/models -q
+```
 
-- Testes automatizados (unitários/integrados)
-- Logs estruturados e observabilidade básica
-- Containerização e checklist de deploy
+> Observação: se `pytest` não estiver instalado no ambiente local, instale com:
+>
+> ```bash
+> .venv/bin/pip install pytest
+> ```
 
-## Status
+## Arquitetura
 
-Projeto em fase inicial de MVP.
+A aplicação segue arquitetura em camadas:
+
+- **API**: rotas HTTP e mapeamento de status/erros;
+- **Service**: regras de negócio;
+- **Repository**: acesso ao SQLite;
+- **Models**: contratos Pydantic.
+
+Estrutura atual:
+
+- [app/main.py](./app/main.py)
+- [app/api/deck_routes.py](./app/api/deck_routes.py)
+- [app/services/deck_service.py](./app/services/deck_service.py)
+- [app/repositories/deck_repository.py](./app/repositories/deck_repository.py)
+- [app/models/deck.py](./app/models/deck.py)
+
+Diagrama de componentes:
+
+- [docs/arquitetura-componentes.mmd](./docs/arquitetura-componentes.mmd)
+
+Escopo e backlog:
+
+- [docs/escopo-mvp.md](./docs/escopo-mvp.md)
+- [docs/backlog.md](./docs/backlog.md)
+
+## Usabilidade da API (estado atual)
+
+Rotas de **Decks** implementadas:
+
+- `GET /decks`
+- `POST /decks`
+- `GET /decks/{deck_id}`
+- `PUT /decks/{deck_id}`
+- `DELETE /decks/{deck_id}`
+
+### Exemplo de criação de deck
+
+```bash
+curl -X POST "http://127.0.0.1:8000/decks" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "English Phrases",
+    "description": "Frases para revisão diária"
+  }'
+```
+
+### Exemplo de atualização parcial
+
+```bash
+curl -X PUT "http://127.0.0.1:8000/decks/<deck_id>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "English Phrases - Avançado"
+  }'
+```
+
+## Limitações atuais
+
+- CRUD completo de **cards** ainda não foi implementado;
+- endpoint de **bulk cards** está definido no escopo/arquitetura, mas ainda não está disponível;
+- integração com LLM é apenas prevista (não implementada no core);
+- sem autenticação/autorização;
+- persistência SQLite local (sem migrações formais);
+- sem pipeline de CI e sem cobertura de testes consolidada.
+
+## Próximos passos
+
+1. Implementar `CardRepository`, `CardService` e rotas de cards.
+2. Implementar `POST /decks/{deck_id}/cards/bulk` com contrato `cards: []`.
+3. Padronizar payload de erro para além de 404 (ex.: 400 e 500).
+4. Adicionar suíte de testes para cards, bulk e cenários de erro de persistência.
+5. Incluir `pytest` e demais dependências de desenvolvimento em arquivo dedicado.
+6. Evoluir observabilidade (logs estruturados e métricas básicas).
+
+## Status do projeto
+
+MVP em evolução ativa, com fundação de Decks concluída e próximos incrementos focados em Cards, bulk import e qualidade operacional.
