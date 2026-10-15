@@ -25,7 +25,20 @@ def create_deck(payload: DeckCreate) -> DeckOut:
     return service.create_deck(payload)
 
 
-@router.get("/{deck_id}", response_model=DeckOut)
+@router.get(
+    "/{deck_id}",
+    response_model=DeckOut,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "description": "Deck não encontrado.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Deck '3fa85f64-5717-4562-b3fc-2c963f66afa6' not found."}
+                }
+            },
+        }
+    },
+)
 def get_deck(deck_id: UUID) -> DeckOut:
     """Return a deck by identifier."""
     try:
@@ -34,7 +47,20 @@ def get_deck(deck_id: UUID) -> DeckOut:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
-@router.put("/{deck_id}", response_model=DeckOut)
+@router.put(
+    "/{deck_id}",
+    response_model=DeckOut,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "description": "Deck não encontrado.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Deck '3fa85f64-5717-4562-b3fc-2c963f66afa6' not found."}
+                }
+            },
+        }
+    },
+)
 def update_deck(deck_id: UUID, payload: DeckUpdate) -> DeckOut:
     """Update an existing deck."""
     try:
@@ -43,7 +69,20 @@ def update_deck(deck_id: UUID, payload: DeckUpdate) -> DeckOut:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
-@router.delete("/{deck_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{deck_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: {
+            "description": "Deck não encontrado.",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Deck '3fa85f64-5717-4562-b3fc-2c963f66afa6' not found."}
+                }
+            },
+        }
+    },
+)
 def delete_deck(deck_id: UUID) -> Response:
     """Delete a deck by identifier."""
     try:
