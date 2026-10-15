@@ -56,14 +56,10 @@ class CardService:
     ) -> list[CardOut]:
         """Create many cards in one transaction."""
         target_deck_id = str(deck_id)
-        if payload.deck_id is not None and str(payload.deck_id) != target_deck_id:
-            raise ValueError("deck_id in payload must match deck_id in path")
         self._ensure_deck_exists(target_deck_id)
 
         prepared_cards: list[dict[str, str]] = []
         for card in payload.cards:
-            if card.deck_id is not None and str(card.deck_id) != target_deck_id:
-                raise ValueError("deck_id in card payload must match deck_id in path")
             prepared_cards.append(
                 {
                     "front": card.front,
