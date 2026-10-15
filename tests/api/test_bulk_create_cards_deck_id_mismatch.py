@@ -27,7 +27,6 @@ def test_bulk_create_cards_returns_400_when_root_deck_id_differs_from_path(tmp_p
             {
                 "front": "Hello world",
                 "back": "Olá mundo",
-                "language": "en",
                 "source": "llm",
             }
         ],
@@ -58,7 +57,6 @@ def test_bulk_create_cards_returns_400_when_card_deck_id_differs_from_path(tmp_p
             {
                 "front": "Another sentence",
                 "back": "Outra frase",
-                "language": "en",
                 "source": "manual",
                 "deck_id": str(card_payload_deck_id),
             }

@@ -37,7 +37,6 @@ def test_delete_deck_removes_related_cards_with_cascade(tmp_path: Path) -> None:
         json={
             "front": "First sentence",
             "back": "Primeira frase",
-            "language": "en",
             "source": "manual",
             "deck_id": deck_id,
         },
@@ -49,7 +48,6 @@ def test_delete_deck_removes_related_cards_with_cascade(tmp_path: Path) -> None:
         json={
             "front": "Second sentence",
             "back": "Segunda frase",
-            "language": "en",
             "source": "llm",
             "deck_id": deck_id,
         },

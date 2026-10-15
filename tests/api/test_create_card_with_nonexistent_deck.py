@@ -27,7 +27,6 @@ def test_post_cards_with_nonexistent_deck_id_returns_404(tmp_path: Path) -> None
     payload = {
         "front": "I am building an API.",
         "back": "Eu estou construindo uma API.",
-        "language": "en",
         "source": "manual",
         "deck_id": str(fake_deck_id),
     }

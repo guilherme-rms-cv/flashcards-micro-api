@@ -30,13 +30,11 @@ def test_bulk_create_cards_returns_201_and_persists_all_items(tmp_path: Path) ->
             {
                 "front": "Another important part of my job is deploying models into production.",
                 "back": "Outra parte importante do meu trabalho é a implantação de modelos em produção.",
-                "language": "en",
                 "source": "llm",
             },
             {
                 "front": "Then, I create an inference service, usually using Python and FastAPI.",
                 "back": "Então, eu crio um serviço de inferência, geralmente usando Python e FastAPI.",
-                "language": "en",
                 "source": "llm",
             },
         ]
@@ -55,7 +53,6 @@ def test_bulk_create_cards_returns_201_and_persists_all_items(tmp_path: Path) ->
             "deck_id",
             "front",
             "back",
-            "language",
             "source",
             "created_at",
             "updated_at",

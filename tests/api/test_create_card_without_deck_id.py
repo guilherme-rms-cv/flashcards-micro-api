@@ -20,7 +20,6 @@ def test_post_cards_without_deck_id_returns_400_and_business_error_message(tmp_p
     payload = {
         "front": "I am building an API.",
         "back": "Eu estou construindo uma API.",
-        "language": "en",
         "source": "manual",
     }
 

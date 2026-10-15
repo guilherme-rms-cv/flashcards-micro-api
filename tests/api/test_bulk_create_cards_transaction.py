@@ -29,13 +29,11 @@ def test_bulk_create_cards_is_all_or_nothing_when_payload_has_invalid_item(tmp_p
             {
                 "front": "Valid sentence",
                 "back": "Frase válida",
-                "language": "en",
                 "source": "llm",
             },
             {
                 "front": "Invalid source item",
                 "back": "Item inválido por source",
-                "language": "en",
                 "source": "invalid-source",
             },
         ]
