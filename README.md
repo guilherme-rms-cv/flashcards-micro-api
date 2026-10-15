@@ -1,16 +1,17 @@
 # Flashcards Micro-API (MVP)
 
-Micro-API em Python para um app de flashcards inspirado no Anki.  
-O foco do MVP é oferecer um backend simples, evolutivo e pronto para integração com clientes web/mobile.
+Micro-API em Python para gestão de decks e cards de flashcards, com suporte a criação em lote.
 
-## Objetivo
+## Objetivo do release atual
 
-Entregar a base funcional para:
+Entregar uma API REST simples e estável para:
 
-- gestão de decks;
-- criação e manutenção de cards;
-- integração opcional com LLM para geração de cards;
-- criação em lote de cards (bulk), incluindo payloads vindos de IA.
+- CRUD de decks;
+- CRUD de cards;
+- criação em lote de cards por deck em `POST /decks/{deck_id}/cards/bulk`;
+- exclusão em cascata de cards ao remover um deck.
+
+> Integração interna com LLM para geração de cards não faz parte deste release.
 
 ## Stack
 
@@ -18,7 +19,7 @@ Entregar a base funcional para:
 - **Framework:** FastAPI
 - **Servidor ASGI:** Uvicorn
 - **Modelagem/validação:** Pydantic v2
-- **Persistência inicial:** SQLite (sem dependências externas de banco)
+- **Persistência:** SQLite
 
 ## Instalação
 
@@ -36,10 +37,11 @@ python3.12 -m venv .venv
 ## Execução
 
 ```bash
+source .venv/bin/activate
 .venv/bin/uvicorn app.main:app --reload
 ```
 
-Endpoints de documentação:
+Documentação automática:
 
 - Swagger: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
@@ -50,31 +52,23 @@ Health check:
 
 ## Testes
 
-O projeto já possui testes iniciais de API e validação de modelos em `tests/`.
-
-### Executar todos os testes
+Executar toda a suíte:
 
 ```bash
 .venv/bin/python -m pytest -q
 ```
 
-### Executar apenas testes de API
+Executar apenas API tests:
 
 ```bash
 .venv/bin/python -m pytest tests/api -q
 ```
 
-### Executar apenas validações de modelo
+Executar apenas validações de modelo:
 
 ```bash
 .venv/bin/python -m pytest tests/models -q
 ```
-
-> Observação: se `pytest` não estiver instalado no ambiente local, instale com:
->
-> ```bash
-> .venv/bin/pip install pytest
-> ```
 
 ## Arquitetura
 
@@ -85,34 +79,30 @@ A aplicação segue arquitetura em camadas:
 - **Repository**: acesso ao SQLite;
 - **Models**: contratos Pydantic.
 
-Estrutura atual:
+Referências:
 
 - [app/main.py](./app/main.py)
 - [app/api/deck_routes.py](./app/api/deck_routes.py)
+- [app/api/card_routes.py](./app/api/card_routes.py)
 - [app/services/deck_service.py](./app/services/deck_service.py)
+- [app/services/card_service.py](./app/services/card_service.py)
 - [app/repositories/deck_repository.py](./app/repositories/deck_repository.py)
+- [app/repositories/card_repository.py](./app/repositories/card_repository.py)
 - [app/models/deck.py](./app/models/deck.py)
-
-Diagrama de componentes:
-
+- [app/models/card.py](./app/models/card.py)
 - [docs/arquitetura-componentes.mmd](./docs/arquitetura-componentes.mmd)
 
-Escopo e backlog:
+## Contrato da API (estado atual)
 
-- [docs/escopo-mvp.md](./docs/escopo-mvp.md)
-- [docs/backlog.md](./docs/backlog.md)
-
-## Usabilidade da API (estado atual)
-
-Rotas de **Decks** implementadas:
+### Decks
 
 - `GET /decks`
 - `POST /decks`
 - `GET /decks/{deck_id}`
-- `PUT /decks/{deck_id}`
-- `DELETE /decks/{deck_id}`
+- `PUT /decks/{deck_id}` (atualização parcial permitida)
+- `DELETE /decks/{deck_id}` (`204` em sucesso, `404` se não existir)
 
-### Exemplo de criação de deck
+Exemplo de criação:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/decks" \
@@ -123,34 +113,125 @@ curl -X POST "http://127.0.0.1:8000/decks" \
   }'
 ```
 
-### Exemplo de atualização parcial
+### Cards
+
+- `GET /cards`
+- `POST /cards`
+- `GET /cards/{card_id}`
+- `PUT /cards/{card_id}` (atualização parcial permitida)
+- `DELETE /cards/{card_id}` (`204` em sucesso, `404` se não existir)
+
+Exemplo de criação:
 
 ```bash
-curl -X PUT "http://127.0.0.1:8000/decks/<deck_id>" \
+curl -X POST "http://127.0.0.1:8000/cards" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "English Phrases - Avançado"
+    "front": "I review flashcards every morning.",
+    "back": "Eu reviso flashcards toda manhã.",
+    "source": "manual",
+    "deck_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
   }'
 ```
 
-## Limitações atuais
+### Bulk por deck
 
-- CRUD completo de **cards** ainda não foi implementado;
-- endpoint de **bulk cards** está definido no escopo/arquitetura, mas ainda não está disponível;
-- integração com LLM é apenas prevista (não implementada no core);
-- sem autenticação/autorização;
-- persistência SQLite local (sem migrações formais);
-- sem pipeline de CI e sem cobertura de testes consolidada.
+- `POST /decks/{deck_id}/cards/bulk`
 
-## Próximos passos
+Regras:
 
-1. Implementar `CardRepository`, `CardService` e rotas de cards.
-2. Implementar `POST /decks/{deck_id}/cards/bulk` com contrato `cards: []`.
-3. Padronizar payload de erro para além de 404 (ex.: 400 e 500).
-4. Adicionar suíte de testes para cards, bulk e cenários de erro de persistência.
-5. Incluir `pytest` e demais dependências de desenvolvimento em arquivo dedicado.
-6. Evoluir observabilidade (logs estruturados e métricas básicas).
+- `deck_id` existe **somente no path**;
+- body contém apenas `cards`;
+- cada item de `cards` exige `front`, `back` e `source` (`manual` ou `llm`);
+- operação é transacional (all-or-nothing).
 
-## Status do projeto
+Exemplo válido:
 
-MVP em evolução ativa, com fundação de Decks concluída e próximos incrementos focados em Cards, bulk import e qualidade operacional.
+```bash
+curl -X POST "http://127.0.0.1:8000/decks/<deck_id>/cards/bulk" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cards": [
+      {
+        "front": "Data quality is as important as model quality.",
+        "back": "A qualidade dos dados é tão importante quanto a qualidade do modelo.",
+        "source": "manual"
+      },
+      {
+        "front": "Small iterative improvements lead to robust systems.",
+        "back": "Pequenas melhorias iterativas levam a sistemas robustos.",
+        "source": "llm"
+      }
+    ]
+  }'
+```
+
+## Erros e status HTTP
+
+### Principais códigos
+
+- `201 Created`: criação com sucesso (`POST /decks`, `POST /cards`, `POST bulk`);
+- `200 OK`: leitura/atualização com sucesso;
+- `204 No Content`: exclusão com sucesso;
+- `400 Bad Request`: regra de negócio inválida;
+- `404 Not Found`: recurso não encontrado;
+- `422 Unprocessable Entity`: erro de validação de schema/payload.
+
+### Exemplos de erro
+
+Deck inexistente:
+
+```json
+{
+  "detail": "Deck '3fa85f64-5717-4562-b3fc-2c963f66afa6' not found."
+}
+```
+
+Card inexistente:
+
+```json
+{
+  "detail": "Card '3fa85f64-5717-4562-b3fc-2c963f66afa6' not found."
+}
+```
+
+`POST /cards` sem `deck_id`:
+
+```json
+{
+  "detail": "deck_id is required to create a card"
+}
+```
+
+`PUT /cards/{card_id}` com payload vazio:
+
+```json
+{
+  "detail": "at least one field must be provided for card update"
+}
+```
+
+Validação de payload (`422`), exemplo de `source` inválido:
+
+```json
+{
+  "detail": [
+    {
+      "loc": ["body", "cards", 0, "source"],
+      "msg": "Input should be 'manual' or 'llm'",
+      "type": "literal_error"
+    }
+  ]
+}
+```
+
+## Integridade de dados
+
+- cards possuem chave estrangeira para deck;
+- exclusão de deck executa **cascade delete** no banco;
+- após `DELETE /decks/{deck_id}`, não permanecem cards órfãos.
+
+## Documentação complementar
+
+- [docs/escopo-mvp.md](./docs/escopo-mvp.md)
+- [docs/backlog.md](./docs/backlog.md)
