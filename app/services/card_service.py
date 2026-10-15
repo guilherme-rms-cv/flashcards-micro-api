@@ -40,7 +40,6 @@ class CardService:
             deck_id=resolved_deck_id,
             front=payload.front,
             back=payload.back,
-            language=payload.language,
             source=payload.source,
         )
         return self._to_output(row)
@@ -69,7 +68,6 @@ class CardService:
                 {
                     "front": card.front,
                     "back": card.back,
-                    "language": card.language,
                     "source": card.source,
                 }
             )
@@ -91,7 +89,6 @@ class CardService:
             card_id=card_id,
             front=payload.front,
             back=payload.back,
-            language=payload.language,
             source=payload.source,
         )
         if row is None:
@@ -116,7 +113,6 @@ class CardService:
         if (
             payload.front is None
             and payload.back is None
-            and payload.language is None
             and payload.source is None
         ):
             raise ValueError("at least one field must be provided for card update")
@@ -137,7 +133,6 @@ class CardService:
             deck_id=UUID(str(row["deck_id"])),
             front=str(row["front"]),
             back=str(row["back"]),
-            language=str(row["language"]),
             source=str(row["source"]),
             created_at=datetime.fromisoformat(str(row["created_at"])),
             updated_at=datetime.fromisoformat(str(row["updated_at"])),
