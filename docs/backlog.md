@@ -121,7 +121,7 @@
   - Descrição: garantir compatibilidade do contrato da API com JSON de cards retornado por LLM.
   - Critério de aceite:
     - [ ] a API aceita o formato `{ "cards": [ { "front": "...", "back": "...", "source": "llm" } ] }`.
-    - [ ] o campo `deck_id` é aceito pelo path (`/decks/{deck_id}/...`) ou opcionalmente no payload, conforme regra documentada.
+    - [ ] o campo `deck_id` é aceito exclusivamente pelo path (`/decks/{deck_id}/...`) para evitar ambiguidade no body.
     - [ ] em caso de item inválido, a API retorna erro padronizado e não persiste dados inconsistentes.
 
 ## Release 3 — Entrega final

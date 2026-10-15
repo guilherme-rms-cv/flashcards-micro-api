@@ -48,7 +48,7 @@ A experiência principal do usuário é:
 10. O endpoint de lote deve aceitar payload no formato `{ "cards": [ ... ] }` com pelo menos 1 card.
 11. Cada item do lote deve conter `front`, `back` e `source`.
 12. O sistema deve validar que `source` aceita apenas `manual` ou `llm`.
-13. O `deck_id` deve ser aceito no path (`/decks/{deck_id}/cards/bulk`) e opcionalmente no payload, conforme regra de API definida.
+13. O `deck_id` deve ser aceito exclusivamente no path (`/decks/{deck_id}/cards/bulk`), evitando duplicidade no body.
 
 ### 3.3 Fluxo de criação assistida por LLM
 

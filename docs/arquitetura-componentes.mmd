@@ -26,6 +26,6 @@ flowchart LR
     LLM -->|retorna cards array| API
 
     API --> BulkPayload --> CardInput --> CardService
-    BulkEndpoint -->|deck_id no path ou no payload| CardService
+    BulkEndpoint -->|deck_id somente no path| CardService
     CardService --> PersistBulk --> CardRepo
 ```
