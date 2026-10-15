@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Desenvolver uma micro-API em Python para suportar um aplicativo de flashcards inspirado no Anki, com foco em criação rápida de cards, organização por decks e auxílio de geração de conteúdo por LLM. O MVP deve permitir que usuários cadastrem, consultem, atualizem e removam decks e flashcards, além de oferecer uma rota inicial de sugestão de cards baseada em texto livre, priorizando simplicidade, integração fácil e evolução incremental.
+Desenvolver uma micro-API em Python para suportar um aplicativo de flashcards inspirado no Anki, com foco em criação rápida de cards, organização por decks e compatibilidade com geração de conteúdo por LLM. O MVP deve permitir que usuários cadastrem, consultem, atualizem e removam decks e flashcards, priorizando simplicidade, integração fácil e evolução incremental.
 
 O produto deve funcionar como base de backend para uma interface web ou mobile, com API REST padronizada, documentação clara e arquitetura mínima, mas extensível. A solução não tem como objetivo substituir o ecossistema completo de revisão espaçada e aprendizagem ativa do Anki em sua forma completa; o escopo do MVP é entregar a base operacional e funcional para criação e gestão de conteúdo de estudo.
 
@@ -13,7 +13,7 @@ A API gerencia:
 - decks (conjuntos de cards organizados por tema ou assunto);
 - cards (itens de estudo com frente, verso e metadados básicos);
 - importação/criação em lote de cards no formato JSON, com origem `manual` ou `llm`;
-- organização e consulta simples de conteúdo por deck, idioma e status.
+- organização e consulta simples de conteúdo por deck e identificador.
 
 A experiência principal do usuário é:
 
@@ -31,18 +31,18 @@ A experiência principal do usuário é:
 2. O sistema deve permitir a listagem de todos os decks cadastrados.
 3. O sistema deve permitir a consulta de um deck por identificador único.
 4. O sistema deve permitir a atualização do nome e da descrição de um deck existente.
-5. O sistema deve permitir a exclusão de um deck, com regra de consistência que evite remoção indevida de dados relacionados.
+5. O sistema deve permitir a exclusão de um deck com remoção em cascata de cards vinculados.
 6. O sistema deve manter a associação de cards a decks, garantindo que cada card pertença a pelo menos um deck.
 
 ### 3.2 Gestão de cards
 
 1. O sistema deve permitir a criação de cards com campos mínimos de frente e verso.
 2. O sistema deve suportar conteúdo bilíngue no texto livre dos campos frente/verso (ex.: inglês/português).
-3. O sistema deve permitir a listagem de todos os cards de um deck.
+3. O sistema deve permitir a listagem geral de cards.
 4. O sistema deve permitir a consulta de um card por identificador único.
 5. O sistema deve permitir a atualização de conteúdo do card, incluindo frente, verso e metadata relevante.
 6. O sistema deve permitir a exclusão de um card individual.
-7. O sistema deve possibilitar filtros simples por deck e status operacional, quando aplicável.
+7. O sistema pode evoluir para filtros simples por deck e status operacional em releases posteriores.
 8. O sistema deve registrar origem do card, diferenciando `manual` e `llm`.
 9. O sistema deve permitir criação em lote de cards por deck via endpoint dedicado.
 10. O endpoint de lote deve aceitar payload no formato `{ "cards": [ ... ] }` com pelo menos 1 card.
@@ -62,8 +62,8 @@ A experiência principal do usuário é:
 
 ### 3.4 Consulta e organização
 
-1. O sistema deve permitir a busca por cards por deck.
-2. O sistema deve permitir a listagem de cards por idioma, quando houver múltiplos idiomas na base.
+1. O sistema deve permitir evolução futura para busca por cards por deck.
+2. O sistema deve permitir a listagem geral de cards e consulta por identificador.
 3. O sistema deve retornar respostas estruturadas em JSON, com campos explícitos e status HTTP adequado.
 4. O sistema deve disponibilizar documentação automática da API via Swagger/OpenAPI.
 

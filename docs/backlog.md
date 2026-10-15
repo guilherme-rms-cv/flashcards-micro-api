@@ -39,19 +39,19 @@
 - [ ] RF-06 — Criar card em deck
   - Descrição: permitir adicionar um card a um deck existente.
   - Critério de aceite:
-    - [ ] `POST /decks/{deck_id}/cards` aceita `front`, `back` e `source`.
-    - [ ] associa o card ao deck informado.
+    - [ ] `POST /cards` aceita `front`, `back`, `source` e `deck_id`.
+    - [ ] valida existência do deck informado antes de persistir.
     - [ ] retorna `201 Created` com o card persistido.
 
-- [ ] RF-07 — Listar cards por deck
-  - Descrição: consultar todos os cards de um deck.
+- [ ] RF-07 — Listar cards
+  - Descrição: consultar todos os cards cadastrados.
   - Critério de aceite:
-    - [ ] `GET /decks/{deck_id}/cards` retorna lista de cards do deck.
-    - [ ] cards fora do deck não aparecem na resposta.
-    - [ ] retorna `404` quando o deck não existe.
+    - [ ] `GET /cards` retorna lista em JSON.
+    - [ ] cada item inclui `id`, `deck_id`, `front`, `back`, `source`, `created_at`, `updated_at`.
+    - [ ] resposta é vazia (`[]`) quando não existem cards.
 
 - [ ] RF-08 — Atualizar card
-  - Descrição: editar frente, verso e idioma de um card.
+  - Descrição: editar frente, verso e origem (`source`) de um card.
   - Critério de aceite:
     - [ ] `PUT /cards/{id}` atualiza campos válidos.
     - [ ] rejeita campos obrigatórios vazios.
@@ -76,7 +76,7 @@
 - [ ] RT-02 — Validação de entrada
   - Descrição: validar payloads e campos obrigatórios antes da persistência.
   - Critério de aceite:
-    - [ ] entradas inválidas retornam `400 Bad Request`.
+    - [ ] entradas inválidas retornam `400 Bad Request` (regras de negócio) ou `422 Unprocessable Entity` (schema).
     - [ ] mensagens de erro são coerentes e legíveis.
     - [ ] não há persistência de dados inconsistentes.
 
@@ -99,7 +99,7 @@
   - Critério de aceite:
     - [ ] erros seguem contrato JSON consistente.
     - [ ] recursos inexistentes retornam `404` com detalhe claro.
-    - [ ] erros de validação retornam `400` com mensagens resumidas.
+    - [ ] erros de validação retornam `422` com mensagens resumidas.
 
 - [ ] RT-04 — Documentação OpenAPI
   - Descrição: disponibilizar documentação automática da API.
@@ -115,7 +115,7 @@
     - [ ] cada item de `cards` exige `front`, `back` e `source`.
     - [ ] `source` aceita apenas `manual` ou `llm`.
     - [ ] operação persiste todos os cards válidos no deck informado.
-    - [ ] operação rejeita payload sem cards com `400 Bad Request`.
+    - [ ] operação rejeita payload sem cards com `422 Unprocessable Entity`.
 
 - [ ] RF-13 — Validar contrato de card de integração com LLM
   - Descrição: garantir compatibilidade do contrato da API com JSON de cards retornado por LLM.
