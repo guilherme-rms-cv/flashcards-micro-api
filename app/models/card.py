@@ -18,7 +18,6 @@ class CardCreate(BaseModel):
 
     front: str = Field(..., min_length=1, max_length=1000)
     back: str = Field(..., min_length=1, max_length=1000)
-    language: str = Field(..., min_length=2, max_length=10)
     source: CardSource
     deck_id: Optional[UUID] = None
 
@@ -30,15 +29,6 @@ class CardCreate(BaseModel):
             raise ValueError("value cannot be empty")
         return cleaned
 
-    @field_validator("language")
-    @classmethod
-    def validate_language(cls, value: str) -> str:
-        cleaned = value.strip().lower()
-        if not cleaned:
-            raise ValueError("language cannot be empty")
-        return cleaned
-
-
 class CardUpdate(BaseModel):
     """Input model for partial card updates."""
 
@@ -46,7 +36,6 @@ class CardUpdate(BaseModel):
 
     front: Optional[str] = Field(default=None, min_length=1, max_length=1000)
     back: Optional[str] = Field(default=None, min_length=1, max_length=1000)
-    language: Optional[str] = Field(default=None, min_length=2, max_length=10)
     source: Optional[CardSource] = None
 
     @field_validator("front", "back")
@@ -60,18 +49,6 @@ class CardUpdate(BaseModel):
             raise ValueError("value cannot be empty")
         return cleaned
 
-    @field_validator("language")
-    @classmethod
-    def validate_optional_language(cls, value: Optional[str]) -> Optional[str]:
-        if value is None:
-            return value
-
-        cleaned = value.strip().lower()
-        if not cleaned:
-            raise ValueError("language cannot be empty")
-        return cleaned
-
-
 class CardOut(BaseModel):
     """Card returned by the API."""
 
@@ -81,7 +58,6 @@ class CardOut(BaseModel):
     deck_id: UUID
     front: str
     back: str
-    language: str
     source: CardSource
     created_at: datetime
     updated_at: datetime
