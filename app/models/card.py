@@ -29,6 +29,25 @@ class CardCreate(BaseModel):
             raise ValueError("value cannot be empty")
         return cleaned
 
+
+class CardBulkItemCreate(BaseModel):
+    """Input model for one bulk card item."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    front: str = Field(..., min_length=1, max_length=1000)
+    back: str = Field(..., min_length=1, max_length=1000)
+    source: CardSource
+
+    @field_validator("front", "back")
+    @classmethod
+    def validate_text_fields(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("value cannot be empty")
+        return cleaned
+
+
 class CardUpdate(BaseModel):
     """Input model for partial card updates."""
 
@@ -68,5 +87,4 @@ class CardBulkCreate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    cards: list[CardCreate] = Field(..., min_length=1)
-    deck_id: Optional[UUID] = None
+    cards: list[CardBulkItemCreate] = Field(..., min_length=1)
