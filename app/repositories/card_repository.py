@@ -36,23 +36,87 @@ class CardRepository:
 
     def _initialize(self) -> None:
         with self._connect() as connection:
-            connection.execute(
-                """
-                CREATE TABLE IF NOT EXISTS cards (
-                    id TEXT PRIMARY KEY,
-                    deck_id TEXT NOT NULL,
-                    front TEXT NOT NULL,
-                    back TEXT NOT NULL,
-                    language TEXT NOT NULL,
-                    source TEXT NOT NULL CHECK(source IN ('manual', 'llm')),
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-                """
-            )
+            self._ensure_decks_table(connection)
+            self._ensure_cards_table_with_cascade(connection)
             connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_cards_deck_id ON cards(deck_id)"
             )
+
+    def _ensure_decks_table(self, connection: sqlite3.Connection) -> None:
+        """Ensure deck table exists for foreign key reference."""
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS decks (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+    def _ensure_cards_table_with_cascade(self, connection: sqlite3.Connection) -> None:
+        """Ensure cards table has ON DELETE CASCADE foreign key."""
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS cards (
+                id TEXT PRIMARY KEY,
+                deck_id TEXT NOT NULL,
+                front TEXT NOT NULL,
+                back TEXT NOT NULL,
+                language TEXT NOT NULL,
+                source TEXT NOT NULL CHECK(source IN ('manual', 'llm')),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(deck_id) REFERENCES decks(id) ON DELETE CASCADE
+            )
+            """
+        )
+
+        if self._cards_table_has_cascade_fk(connection):
+            return
+
+        self._migrate_cards_table_to_cascade(connection)
+
+    def _cards_table_has_cascade_fk(self, connection: sqlite3.Connection) -> bool:
+        """Check if cards table has cascade foreign key to decks."""
+        rows = connection.execute("PRAGMA foreign_key_list(cards)").fetchall()
+        for row in rows:
+            target_table = str(row["table"]).lower()
+            from_column = str(row["from"]).lower()
+            on_delete = str(row["on_delete"]).upper()
+            if target_table == "decks" and from_column == "deck_id" and on_delete == "CASCADE":
+                return True
+        return False
+
+    def _migrate_cards_table_to_cascade(self, connection: sqlite3.Connection) -> None:
+        """Recreate cards table with cascade delete and preserve valid rows."""
+        connection.execute(
+            """
+            CREATE TABLE cards_new (
+                id TEXT PRIMARY KEY,
+                deck_id TEXT NOT NULL,
+                front TEXT NOT NULL,
+                back TEXT NOT NULL,
+                language TEXT NOT NULL,
+                source TEXT NOT NULL CHECK(source IN ('manual', 'llm')),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                FOREIGN KEY(deck_id) REFERENCES decks(id) ON DELETE CASCADE
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO cards_new (id, deck_id, front, back, language, source, created_at, updated_at)
+            SELECT c.id, c.deck_id, c.front, c.back, c.language, c.source, c.created_at, c.updated_at
+            FROM cards c
+            WHERE EXISTS (SELECT 1 FROM decks d WHERE d.id = c.deck_id)
+            """
+        )
+        connection.execute("DROP TABLE cards")
+        connection.execute("ALTER TABLE cards_new RENAME TO cards")
 
     def _utc_now(self) -> str:
         return datetime.now(timezone.utc).isoformat()
