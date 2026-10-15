@@ -12,7 +12,15 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class DeckCreate(BaseModel):
     """Input model for creating a deck."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "example": {
+                "name": "English Phrases",
+                "description": "Frases para revisão diária",
+            }
+        },
+    )
 
     name: str = Field(..., min_length=1, max_length=120)
     description: Optional[str] = Field(default=None, max_length=500)
@@ -40,7 +48,14 @@ class DeckCreate(BaseModel):
 class DeckUpdate(BaseModel):
     """Input model for partial deck updates."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={
+            "example": {
+                "name": "English Phrases - Advanced",
+            }
+        },
+    )
 
     name: Optional[str] = Field(default=None, min_length=1, max_length=120)
     description: Optional[str] = Field(default=None, max_length=500)
