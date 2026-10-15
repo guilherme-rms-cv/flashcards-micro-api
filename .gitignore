@@ -18,6 +18,11 @@ env/
 data/
 
 # =========================
+# Roteiros locais de apresentação (não versionar)
+# =========================
+docs/roteiro-demo-mvp.md
+
+# =========================
 # Ferramentas de teste
 # =========================
 .pytest_cache/
