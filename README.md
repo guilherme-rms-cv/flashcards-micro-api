@@ -26,12 +26,32 @@ Entregar uma API REST simples e estável para:
 ### Pré-requisitos
 
 - Python 3.12
+- `make` (opcional, para usar os atalhos do [Makefile](./Makefile))
 
 ### Setup do ambiente
 
 ```bash
 python3.12 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+```
+
+## Bootstrap rápido (máquina limpa)
+
+### Opção A — com Makefile
+
+```bash
+make install
+make test
+make run
+```
+
+### Opção B — sem make
+
+```bash
+python3.12 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pytest -q
+.venv/bin/python -m uvicorn app.main:app --reload
 ```
 
 ## Execução
@@ -230,6 +250,21 @@ Validação de payload (`422`), exemplo de `source` inválido:
 - cards possuem chave estrangeira para deck;
 - exclusão de deck executa **cascade delete** no banco;
 - após `DELETE /decks/{deck_id}`, não permanecem cards órfãos.
+
+## Reprodutibilidade
+
+- a versão de Python do projeto está fixada em [`.python-version`](./.python-version);
+- dependências estão pinadas em [requirements.txt](./requirements.txt);
+- banco SQLite local é criado automaticamente em `data/decks.db`;
+- arquivos de dados locais em `data/` não devem ser versionados.
+
+## Checklist mínimo de release
+
+- [ ] `make install` executa sem erros (ou fluxo equivalente sem `make`);
+- [ ] `make test` passa (`pytest -q`);
+- [ ] API sobe com `make run` (`/health` retorna `200`);
+- [ ] Swagger abre em `/docs` com exemplos atualizados;
+- [ ] contrato do bulk permanece com `deck_id` somente no path.
 
 ## Documentação complementar
 
