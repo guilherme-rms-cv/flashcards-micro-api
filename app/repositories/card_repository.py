@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any, Optional
 from uuid import UUID, uuid4
 
-CARD_COLUMNS = "id, deck_id, front, back, language, source, created_at, updated_at"
+CARD_COLUMNS = "id, deck_id, front, back, source, created_at, updated_at"
 SELECT_CARD_BASE = f"SELECT {CARD_COLUMNS} FROM cards"
 
 
@@ -57,7 +57,7 @@ class CardRepository:
         )
 
     def _ensure_cards_table_with_cascade(self, connection: sqlite3.Connection) -> None:
-        """Ensure cards table has ON DELETE CASCADE foreign key."""
+        """Ensure cards table has target schema and cascade delete."""
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS cards (
@@ -65,7 +65,6 @@ class CardRepository:
                 deck_id TEXT NOT NULL,
                 front TEXT NOT NULL,
                 back TEXT NOT NULL,
-                language TEXT NOT NULL,
                 source TEXT NOT NULL CHECK(source IN ('manual', 'llm')),
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
@@ -74,13 +73,27 @@ class CardRepository:
             """
         )
 
-        if self._cards_table_has_cascade_fk(connection):
+        if self._cards_table_matches_target_schema(connection):
             return
 
-        self._migrate_cards_table_to_cascade(connection)
+        self._migrate_cards_table_to_target_schema(connection)
 
-    def _cards_table_has_cascade_fk(self, connection: sqlite3.Connection) -> bool:
-        """Check if cards table has cascade foreign key to decks."""
+    def _cards_table_matches_target_schema(self, connection: sqlite3.Connection) -> bool:
+        """Check if cards table has expected columns and cascade FK."""
+        expected_columns = {
+            "id",
+            "deck_id",
+            "front",
+            "back",
+            "source",
+            "created_at",
+            "updated_at",
+        }
+        info_rows = connection.execute("PRAGMA table_info(cards)").fetchall()
+        current_columns = {str(row["name"]).lower() for row in info_rows}
+        if current_columns != expected_columns:
+            return False
+
         rows = connection.execute("PRAGMA foreign_key_list(cards)").fetchall()
         for row in rows:
             target_table = str(row["table"]).lower()
@@ -90,8 +103,8 @@ class CardRepository:
                 return True
         return False
 
-    def _migrate_cards_table_to_cascade(self, connection: sqlite3.Connection) -> None:
-        """Recreate cards table with cascade delete and preserve valid rows."""
+    def _migrate_cards_table_to_target_schema(self, connection: sqlite3.Connection) -> None:
+        """Recreate cards table with target schema and preserve valid rows."""
         connection.execute(
             """
             CREATE TABLE cards_new (
@@ -99,7 +112,6 @@ class CardRepository:
                 deck_id TEXT NOT NULL,
                 front TEXT NOT NULL,
                 back TEXT NOT NULL,
-                language TEXT NOT NULL,
                 source TEXT NOT NULL CHECK(source IN ('manual', 'llm')),
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
@@ -109,8 +121,8 @@ class CardRepository:
         )
         connection.execute(
             """
-            INSERT INTO cards_new (id, deck_id, front, back, language, source, created_at, updated_at)
-            SELECT c.id, c.deck_id, c.front, c.back, c.language, c.source, c.created_at, c.updated_at
+            INSERT INTO cards_new (id, deck_id, front, back, source, created_at, updated_at)
+            SELECT c.id, c.deck_id, c.front, c.back, c.source, c.created_at, c.updated_at
             FROM cards c
             WHERE EXISTS (SELECT 1 FROM decks d WHERE d.id = c.deck_id)
             """
@@ -126,7 +138,6 @@ class CardRepository:
         deck_id: str | UUID,
         front: str,
         back: str,
-        language: str,
         source: str,
     ) -> dict[str, Any]:
         """Create a new card."""
@@ -137,7 +148,6 @@ class CardRepository:
             "deck_id": self._normalize_id(deck_id),
             "front": front.strip(),
             "back": back.strip(),
-            "language": language.strip().lower(),
             "source": source.strip().lower(),
             "created_at": timestamp,
             "updated_at": timestamp,
@@ -146,8 +156,8 @@ class CardRepository:
         with self._connect() as connection:
             connection.execute(
                 """
-                INSERT INTO cards (id, deck_id, front, back, language, source, created_at, updated_at)
-                VALUES (:id, :deck_id, :front, :back, :language, :source, :created_at, :updated_at)
+                INSERT INTO cards (id, deck_id, front, back, source, created_at, updated_at)
+                VALUES (:id, :deck_id, :front, :back, :source, :created_at, :updated_at)
                 """,
                 payload,
             )
@@ -171,7 +181,6 @@ class CardRepository:
                     "deck_id": target_deck_id,
                     "front": card["front"].strip(),
                     "back": card["back"].strip(),
-                    "language": card["language"].strip().lower(),
                     "source": card["source"].strip().lower(),
                     "created_at": timestamp,
                     "updated_at": timestamp,
@@ -181,8 +190,8 @@ class CardRepository:
         with self._connect() as connection:
             connection.executemany(
                 """
-                INSERT INTO cards (id, deck_id, front, back, language, source, created_at, updated_at)
-                VALUES (:id, :deck_id, :front, :back, :language, :source, :created_at, :updated_at)
+                INSERT INTO cards (id, deck_id, front, back, source, created_at, updated_at)
+                VALUES (:id, :deck_id, :front, :back, :source, :created_at, :updated_at)
                 """,
                 rows,
             )
@@ -218,7 +227,6 @@ class CardRepository:
         card_id: str | UUID,
         front: Optional[str] = None,
         back: Optional[str] = None,
-        language: Optional[str] = None,
         source: Optional[str] = None,
     ) -> Optional[dict[str, Any]]:
         """Update a card by identifier."""
@@ -230,7 +238,6 @@ class CardRepository:
             "id": self._normalize_id(card_id),
             "front": front.strip() if front is not None else current["front"],
             "back": back.strip() if back is not None else current["back"],
-            "language": language.strip().lower() if language is not None else current["language"],
             "source": source.strip().lower() if source is not None else current["source"],
             "updated_at": self._utc_now(),
         }
@@ -241,7 +248,6 @@ class CardRepository:
                 UPDATE cards
                 SET front = :front,
                     back = :back,
-                    language = :language,
                     source = :source,
                     updated_at = :updated_at
                 WHERE id = :id
