@@ -274,19 +274,117 @@ Resposta: Código completo do arquivo de teste em tests/api/test_update_card_emp
 
 ##########
 
------- REFATORAR --------
+------ CORRIGIR --------
 
-Mas pelo que testei, consegui criar um card sem haver um deck previamente existente. Por exemplo, criei o card ao que parece com um deck id fake. Pois quando consultei a lista de decks apareceu como lista vazia. Além disso, quando tentei get deck, retornou que o deck não foi encontrado. Apenas me responda, não altere nada de código
+Por que existem dois campos "deck_id" na rota POST /decks/{deck_id}/cards/bulk? Parece estar duplicado sem necessidade.
 
-Você está certo — e seu teste revelou uma inconsistência real do estado atual.
+{
+  "cards": [
+    {
+      "front": "string",
+      "back": "string",
+      "source": "manual",
+      "deck_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+    }
+  ],
+  "deck_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+}
 
-Hoje, o sistema exige um deck_id informado, mas não valida se esse deck realmente existe antes de criar o card.
-Por isso, um deck_id fake passa, o card é salvo, e depois:
+---------------------------------
 
-GET /decks pode continuar vazio
-GET /decks/{id} retorna “not found”
-Ou seja:
+Contexto: Ao atualizar um Deck, as opções de atualização que aparecem são os campos "name" e "description". Ambas, neste caso de atualização, vêm com o valor padrão "string". Mas se o usuário quiser atualizar apenas um destes, terá que repetir o mesmo valor do outro para que não seja sobrescrito. É indicado tratar este caso de atualização para manter o valor anterior inalterado? Porque caso o usuário não repita o valor já cadastrado para "description", por exemplo, este será alterado se tornando o valor padrão "string", o que não seria desejado na maior parte dos casos. Assim imagino. 
+Dúvida: Isto deve ser tratado na API, ou é tarefa para o Frontend?
 
-✅ regra implementada: “card precisa de deck_id”
-❌ regra faltante: “deck_id precisa existir em decks”
-Sua leitura está correta.
+
+Contexto: Na exclusão de um Deck, os Cards pertencentes a ele também deveriam ser excluídos, e não ficarem "orfãos", sem Deck "pai".
+Dúvida: Estou certo?
+
+
+Dúvida: Faz sentido excluir o campo "language" para Cards?
+Contexto: O Campo "language" não faz sentido para os Cards.
+Objetivo: Excluir o campo "language" pois não há utilização prática.
+
+
+Contexto: API FastAPI de flashcards com arquitetura em camadas (app/api, app/services, app/repositories). Atualmente, ao excluir um Deck, os Cards vinculados podem ficar órfãos. Quero garantir integridade referencial com cascade delete.
+
+Objetivo: Implementar exclusão em cascata de Cards ao excluir Deck.
+Regras esperadas:
+
+ao executar DELETE /decks/{deck_id}, todos os cards com deck_id correspondente devem ser removidos automaticamente;
+não devem existir cards órfãos após exclusão do deck;
+manter o comportamento atual de retorno HTTP (204 em sucesso, 404 para deck inexistente);
+preservar compatibilidade com o restante da API.
+Estilo: Python tipado, SQLite, mudanças cirúrgicas, sem dependências externas novas, docstrings curtas, sem hacks. Priorizar integridade no banco (FK + ON DELETE CASCADE) e complementar no service/repository apenas se necessário.
+
+Resposta:
+
+Identificar causa raiz (por que os órfãos são possíveis hoje).
+Aplicar correção nos arquivos necessários (ex.: app/repositories/card_repository.py, app/repositories/deck_repository.py, e eventuais ajustes em service).
+Se houver banco já existente sem FK/cascade, incluir estratégia de migração simples e segura para o MVP (recriação de tabela ou script de ajuste).
+Criar/ajustar testes de integração cobrindo:
+exclusão de deck remove cards vinculados;
+exclusão de deck inexistente retorna 404;
+após exclusão, GET /cards não retorna itens do deck removido.
+Executar testes e informar resultado final.
+
+
+
+Contexto: API FastAPI de flashcards em arquitetura por camadas (app/models, app/repositories, app/services, app/api) com suporte a Cards (CRUD e bulk). O campo language existe no contrato, no banco e nas rotas, mas não tem uso prático no produto e deve ser removido para simplificar o MVP.
+
+Objetivo: Remover completamente o campo language de Cards em toda a aplicação, sem quebrar o comportamento restante (CRUD, bulk, cascade delete e testes).
+Aplicar a remoção em:
+
+modelos Pydantic de card;
+repositório SQLite (cards table, inserts, updates, selects, migração);
+service de cards;
+rotas de cards e bulk;
+testes automatizados;
+documentação relacionada (README e docs de escopo/backlog/arquitetura, se citarem language).
+Estilo: Python tipado, Pydantic v2, FastAPI, SQLite, mudanças cirúrgicas e consistentes, sem dependências externas novas, docstrings curtas, sem hacks, sem regressão de comportamento não relacionado.
+
+Resposta:
+
+Lista dos arquivos alterados com resumo da mudança por arquivo.
+Código atualizado nos arquivos necessários (incluindo migração de schema para remover coluna language em base existente, de forma segura para MVP).
+Atualização dos testes impactados + novos testes se necessário.
+Execução da suíte de testes e resultado final.
+Mensagens de commit atômicas (Conventional Commits) para essa mudança.
+
+
+
+Me dê mensagens de commits atômicos no padrão conventional commits (docs + openapi). Indique para qual arquivo é cada commit.
+
+
+
+Faça os commits para as mudanças com as mensagens que sugeriu. Não mencione você (copilot) ou qualquer uso de IA nas mensagens.
+
+
+
+Contexto: Não vou atualizar o PUT nem adicionar PATCH, nem integração com LLM para geração de Cards. Apenas atualização da documentação para release.
+Objetivo: Verificar e atualizar a documentação (Swagger/README/docs). Garantir que exemplos e descrições estão 100% alinhados ao que a API realmente aceita/retorna (especialmente bulk e erros).
+Resposta: Documentação geral atualizada (Swagger/README/docs).
+
+
+
+Contexto: Projeto FastAPI análogo ao Anki com comandos de instalar dependências, executar API e rodar testes.
+Objetivo: Gerar Makefile com targets install, run e test.
+Estilo: Simples e portável.
+Resposta: Arquivo com conteúdo completo de Makefile.
+
+
+1) Precisa ser criado um env.example?
+2) O que falta para ser reproduzível em máquina limpa?
+Resposta em checklist objetivo.
+
+
+
+Contexto: Vou publicar a versão v1.0.0 no Github.
+Objetivo: Gerar checklist final com itens técnicos e de documentação para release.
+Estilo: Checkbox Markdown.
+Resposta: Lista completa.
+
+
+Contexto: Preciso apresentar o MVP em 5 minutos para stakeholders técnicos.
+Objetivo: Criar roteiro com tempos por bloco e comandos para mostrar no terminal.
+Estilo: Direto, sem marketing.
+Resposta: Roteiro em markdown num arquivo em docs, mas esse arquivo não pode subir para o Github.
