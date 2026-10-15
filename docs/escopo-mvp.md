@@ -11,7 +11,7 @@ O produto deve funcionar como base de backend para uma interface web ou mobile, 
 A API gerencia:
 
 - decks (conjuntos de cards organizados por tema ou assunto);
-- cards (itens de estudo com frente e verso, idioma e metadados básicos);
+- cards (itens de estudo com frente, verso e metadados básicos);
 - importação/criação em lote de cards no formato JSON, com origem `manual` ou `llm`;
 - organização e consulta simples de conteúdo por deck, idioma e status.
 
@@ -36,17 +36,17 @@ A experiência principal do usuário é:
 
 ### 3.2 Gestão de cards
 
-1. O sistema deve permitir a criação de cards com campos mínimos de frente, verso e idioma.
-2. O sistema deve suportar cards bilíngues, com exemplos típicos de frente em inglês e verso em português.
+1. O sistema deve permitir a criação de cards com campos mínimos de frente e verso.
+2. O sistema deve suportar conteúdo bilíngue no texto livre dos campos frente/verso (ex.: inglês/português).
 3. O sistema deve permitir a listagem de todos os cards de um deck.
 4. O sistema deve permitir a consulta de um card por identificador único.
-5. O sistema deve permitir a atualização de conteúdo do card, incluindo frente, verso, idioma e metadata relevante.
+5. O sistema deve permitir a atualização de conteúdo do card, incluindo frente, verso e metadata relevante.
 6. O sistema deve permitir a exclusão de um card individual.
-7. O sistema deve possibilitar filtros simples por deck, idioma e status operacional, quando aplicável.
+7. O sistema deve possibilitar filtros simples por deck e status operacional, quando aplicável.
 8. O sistema deve registrar origem do card, diferenciando `manual` e `llm`.
 9. O sistema deve permitir criação em lote de cards por deck via endpoint dedicado.
 10. O endpoint de lote deve aceitar payload no formato `{ "cards": [ ... ] }` com pelo menos 1 card.
-11. Cada item do lote deve conter `front`, `back`, `language` e `source`.
+11. Cada item do lote deve conter `front`, `back` e `source`.
 12. O sistema deve validar que `source` aceita apenas `manual` ou `llm`.
 13. O `deck_id` deve ser aceito no path (`/decks/{deck_id}/cards/bulk`) e opcionalmente no payload, conforme regra de API definida.
 
@@ -54,7 +54,7 @@ A experiência principal do usuário é:
 
 1. O MVP deve suportar integração com LLM como fonte opcional de conteúdo para criação de cards.
 2. A responsabilidade da API é receber e validar o JSON final de cards, sem exigir componente interno de sugestão no núcleo.
-3. A resposta usada da LLM deve ser compatível com o contrato `{ "cards": [ { "front": "...", "back": "...", "language": "en", "source": "llm" } ] }`.
+3. A resposta usada da LLM deve ser compatível com o contrato `{ "cards": [ { "front": "...", "back": "...", "source": "llm" } ] }`.
 4. O sistema deve permitir persistir 1..N cards dessa resposta em um deck específico por operação em lote.
 5. O sistema deve rejeitar payloads com cards vazios, campos ausentes ou formato inválido.
 6. O sistema deve registrar origem `llm` quando o card vier de geração externa.
@@ -91,7 +91,7 @@ A experiência principal do usuário é:
 ### 4.3 Segurança
 
 1. A API deve validar todos os dados recebidos antes do processamento.
-2. O sistema deve impedir uso indevido de entrada maliciosa em campos de texto e prompts.
+2. O sistema deve impedir uso indevido de entrada maliciosa em campos textuais e prompts.
 3. O sistema deve seguir boas práticas de separação entre dados de usuário, prompts e artefatos gerados.
 4. O sistema deve evitar exposição de informações sensíveis em logs e respostas de erro.
 

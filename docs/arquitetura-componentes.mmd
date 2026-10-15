@@ -11,7 +11,7 @@ flowchart LR
 
     BulkEndpoint[POST /decks/:deck_id/cards/bulk]
     BulkPayload[cards: array de CardInput]
-    CardInput[CardInput: front back language source]
+    CardInput[CardInput: front back source]
     PersistBulk[Persistencia em lote 1..N cards]
 
     Client --> API

@@ -39,7 +39,7 @@
 - [ ] RF-06 — Criar card em deck
   - Descrição: permitir adicionar um card a um deck existente.
   - Critério de aceite:
-    - [ ] `POST /decks/{deck_id}/cards` aceita `front`, `back`, `language` e `source`.
+    - [ ] `POST /decks/{deck_id}/cards` aceita `front`, `back` e `source`.
     - [ ] associa o card ao deck informado.
     - [ ] retorna `201 Created` com o card persistido.
 
@@ -80,10 +80,10 @@
     - [ ] mensagens de erro são coerentes e legíveis.
     - [ ] não há persistência de dados inconsistentes.
 
-- [ ] RF-10 — Suporte a cards bilíngues
-  - Descrição: permitir cards com frente e verso em idiomas distintos.
+- [ ] RF-10 — Conteúdo textual frente/verso
+  - Descrição: permitir cards com frente e verso textuais, sem metadado obrigatório de idioma.
   - Critério de aceite:
-    - [ ] aceita `language` ou variantes de idioma como `en`, `pt`.
+    - [ ] aceita `front` e `back` como textos obrigatórios.
     - [ ] estrutura do card mantém `front` e `back` corretamente preenchidos.
     - [ ] exemplo típico de inglês/português funciona sem erro.
 
@@ -112,7 +112,7 @@
   - Descrição: permitir criação de 1..N cards em uma única requisição, incluindo cards gerados por LLM.
   - Critério de aceite:
     - [ ] `POST /decks/{deck_id}/cards/bulk` aceita payload com `cards` (array com pelo menos 1 item).
-    - [ ] cada item de `cards` exige `front`, `back`, `language` e `source`.
+    - [ ] cada item de `cards` exige `front`, `back` e `source`.
     - [ ] `source` aceita apenas `manual` ou `llm`.
     - [ ] operação persiste todos os cards válidos no deck informado.
     - [ ] operação rejeita payload sem cards com `400 Bad Request`.
@@ -120,7 +120,7 @@
 - [ ] RF-13 — Validar contrato de card de integração com LLM
   - Descrição: garantir compatibilidade do contrato da API com JSON de cards retornado por LLM.
   - Critério de aceite:
-    - [ ] a API aceita o formato `{ "cards": [ { "front": "...", "back": "...", "language": "en", "source": "llm" } ] }`.
+    - [ ] a API aceita o formato `{ "cards": [ { "front": "...", "back": "...", "source": "llm" } ] }`.
     - [ ] o campo `deck_id` é aceito pelo path (`/decks/{deck_id}/...`) ou opcionalmente no payload, conforme regra documentada.
     - [ ] em caso de item inválido, a API retorna erro padronizado e não persiste dados inconsistentes.
 
