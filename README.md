@@ -13,6 +13,28 @@ Entregar uma API REST simples e estável para:
 
 > Integração interna com LLM para geração de cards não faz parte deste release.
 
+## Contexto do domínio (flashcards)
+
+Flashcards são unidades de estudo compostas por dois lados, normalmente representados como `front` (pergunta, pista ou termo) e `back` (resposta, explicação ou tradução). Esse formato é útil para revisão ativa de conteúdo e organização incremental de conhecimento em coleções temáticas (decks).
+
+Nesta API, o foco é oferecer a base de backend para esse domínio: modelagem de decks, manutenção de cards e operações de lote para ingestão rápida de conteúdo.
+
+## Escopo vs Anki
+
+Este projeto é um MVP inspirado no domínio de flashcards e não uma implementação completa do ecossistema Anki. O escopo atual prioriza uma API enxuta, reproduzível e integrável.
+
+Limitações atuais do MVP:
+
+- não implementa algoritmo de repetição espaçada (ex.: SM-2 e variantes);
+- não inclui telemetria educacional avançada (desempenho por usuário, retenção por período, etc.);
+- não cobre recursos de cliente final como sincronização multi-dispositivo, plugins e UX de revisão.
+
+### Por que endpoint bulk?
+
+O endpoint `POST /decks/{deck_id}/cards/bulk` foi incluído para reduzir fricção operacional em integrações. Em vez de criar cards individualmente, um produtor de dados pode enviar uma coleção de cards em uma única requisição JSON, com validação de contrato e persistência transacional.
+
+Esse modelo favorece automação (por exemplo, pipelines de geração/curadoria de conteúdo) e reduz passos manuais comuns em fluxos baseados em importação por arquivo e configuração interativa.
+
 ## Stack
 
 - **Linguagem:** Python 3.12
